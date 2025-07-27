@@ -8,7 +8,7 @@ A step-by-step deployment guide to run a Spring Boot application connected to My
 
 **Launch EC2 Ubuntu Instance:**
 - **OS**: Ubuntu 20.04
-- **Instance Type**: t2.medium
+- **Instance Type**: t2.micro
 - **Storage**: 30 GB
 - **Ports to Allow**: 22 (SSH), 8080 (App), 3306 (MySQL)
 
@@ -42,16 +42,26 @@ cd springboot-new
 ```Dockerfile
 # syntax=docker/dockerfile:1
 
-FROM maven:3.8.5-openjdk-17-slim AS build
-WORKDIR /app
-COPY . .
-RUN mvn clean package -DskipTests
+#----------stage-1--------------
 
-FROM openjdk:17-jdk-slim
-WORKDIR /app
-COPY --from=build /app/target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+
+FROM maven:3.8.3-openjdk-17 AS builder 
+
+WORKDIR /app 
+
+COPY  . /app
+
+RUN mvn clean install -DskipTests=true
+
+#----------stage-2-----------------
+
+FROM  openjdk:17-alpine     
+
+COPY --from=builder /app/target/*.jar /app/target/bankapp.jar
+ 
+EXPOSE 80:80
+
+ENTRYPOINT ["java" , "-jar" , "/app/target/bankapp.jar"]
 ```
 
 ---
